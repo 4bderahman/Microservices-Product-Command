@@ -1,0 +1,230 @@
+const express = require("express");
+const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+require("dotenv").config();
+
+const Product = require("./models/Product");
+const app = express();
+
+app.use(express.json());
+
+// Set strict query mode
+mongoose.set("strictQuery", true);
+
+// Db connection
+mongoose
+  .connect("mongodb://127.0.0.1/microservices-db", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log("Connected to MongoDB");
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+  });
+
+// User Model
+const userSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true }
+});
+const User = mongoose.model("User", userSchema);
+
+// Command Model
+const commandSchema = new mongoose.Schema({
+  userId: { type: String, required: true },
+  products: [{
+    productId: { type: Number, required: true },
+    quantity: { type: Number, required: true }
+  }],
+  totalPrice: { type: Number, required: true },
+  status: { type: String, default: 'pending' }
+});
+const Command = mongoose.model("Command", commandSchema);
+
+// Middleware to verify JWT token
+const verifyToken = (req, res, next) => {
+  const token = req.header("Authorization")?.replace("Bearer ", "");
+  if (!token) return res.status(401).json({ message: "Access denied" });
+
+  try {
+    const verified = jwt.verify(token, "your-secret-key");
+    req.user = verified;
+    next();
+  } catch (err) {
+    res.status(400).json({ message: "Invalid token" });
+  }
+};
+
+// POST ROUTE
+app.post("/api/products", async (req, res) => {
+    try {
+      const productData = {
+        productId: req.body.productId, 
+        name: req.body.name,
+        price: req.body.price,
+        description: req.body.description,
+      };
+        
+      if (!productData.productId) {
+        return res.status(400).json({
+          message: "id est obligatoire!",
+        });
+      }
+
+      const newProduct = new Product(productData);
+      const savedProduct = await newProduct.save();
+
+      res.status(201).json({
+        message: "Produit créé avec succès",
+        product: savedProduct,
+      });
+    } catch (error) {
+      console.error("Error creating product:", error);
+      res.status(500).json({
+        message: "Error creating product",
+        error: error.message
+      });
+    }
+  } 
+);
+
+// GET ROUTE
+app.get("/api/products/:productId", async (req, res) => {
+    try {
+      const productId = Number(req.params.productId);
+      const product = await Product.findOne({ productId: productId });
+
+      if (!product) {
+        return res.status(404).json({
+          message: "Produit non trouvé!",
+        });
+      }
+      res.json({
+        message: "Produit trouvé!",
+        product: product,
+      });
+    } catch (error) {
+      console.error("Error fetching product:", error);
+      res.status(500).json({
+        message: "Error fetching product",
+        error: error.message
+      });
+    }
+  });
+
+// Auth Routes
+app.post("/auth/register", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    // Check if user exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Create user
+    const user = new User({ email, password: hashedPassword });
+    await user.save();
+    
+    res.status(201).json({ message: "User created successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error creating user" });
+  }
+});
+
+app.post("/auth/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    // Check password
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(400).json({ message: "Invalid password" });
+    }
+
+    // Create token
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      "your-secret-key",
+      { expiresIn: "1h" }
+    );
+
+    res.json({ token });
+  } catch (error) {
+    res.status(500).json({ message: "Error logging in" });
+  }
+});
+
+// Command Routes (Protected)
+app.post("/api/commands", verifyToken, async (req, res) => {
+  try {
+    const { products, totalPrice } = req.body;
+    
+    const command = new Command({
+      userId: req.user.userId,
+      products,
+      totalPrice
+    });
+
+    await command.save();
+    res.status(201).json({ message: "Command created successfully", command });
+  } catch (error) {
+    res.status(500).json({ message: "Error creating command" });
+  }
+});
+
+app.get("/api/commands", verifyToken, async (req, res) => {
+  try {
+    const commands = await Command.find({ userId: req.user.userId });
+    res.json(commands);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching commands" });
+  }
+});
+
+app.get("/api/commands/:id", verifyToken, async (req, res) => {
+  try {
+    const command = await Command.findOne({ 
+      _id: req.params.id,
+      userId: req.user.userId 
+    });
+    
+    if (!command) {
+      return res.status(404).json({ message: "Command not found" });
+    }
+    
+    res.json(command);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching command" });
+  }
+});
+
+const PORT = process.env.PORT || 4000;
+
+
+
+
+
+
+
+
+
+
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2N2VkMTdiNWFiZmFmZDU5OWY3OTYwMGYiLCJlbWFpbCI6InRlc3RAdGVzdC5jb20iLCJpYXQiOjE3NDM1OTEzNzEsImV4cCI6MTc0MzU5NDk3MX0.1q8hLTfvfDDRodQXXBo6ovAA5jD3MrqQuXKZ2Lz4OCU
