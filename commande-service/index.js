@@ -64,6 +64,22 @@ app.get("/commande/get", isAuthenticated, async (req, res) => {
   }
 });
 
+// Get a specific command by ID
+app.get("/commande/:id", async (req, res) => {
+  try {
+    const commande = await Commande.findById(req.params.id);
+    
+    if (!commande) {
+      return res.status(404).json({ message: "Commande not found" });
+    }
+    
+    return res.json(commande);
+  } catch (error) {
+    console.error("Error fetching command:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Commande-service running on port ${PORT}`);
 }); 

@@ -1,11 +1,15 @@
+# Architecture de Microservices
+
+Un projet simple démontrant une architecture de microservices avec Node.js, Express et MongoDB.
+
 ## Description
 
-Ce projet est composé de trois microservices indépendants:
+Ce projet est composé de quatre microservices indépendants:
 
 1. **Service d'Authentification** (Port 4002) - Gère l'inscription et la connexion des utilisateurs avec JWT
 2. **Service de Commandes** (Port 4001) - Gère la création et la récupération des commandes
 3. **Service de Produits** (Port 4000) - Gère les produits et leur information
-
+4. **Service de Livraison** (Port 4003) - Gère la livraison des commandes
 
 ## Installation
 
@@ -31,6 +35,11 @@ npm install express mongoose jsonwebtoken axios
 cd ../produit-service
 npm init -y
 npm install express mongoose jsonwebtoken
+
+# Pour le service de livraison
+cd ../livraison-service
+npm init -y
+npm install express mongoose jsonwebtoken axios
 ```
 
 ## Utilisation
@@ -49,8 +58,11 @@ node index.js
 # Terminal 3 (Service de Produits)
 cd produit-service
 node index.js
-```
 
+# Terminal 4 (Service de Livraison)
+cd livraison-service
+node index.js
+```
 
 2. Testez les API avec Postman:
 
@@ -68,6 +80,14 @@ node index.js
 
 - Créer une commande: `POST http://localhost:4001/commande/create`
 - Obtenir les commandes: `GET http://localhost:4001/commande/get`
+- Obtenir une commande par ID: `GET http://localhost:4001/commande/:id`
+
+### Service de Livraison (Port 4003)
+
+- Créer une livraison: `POST http://localhost:4003/livraison/create`
+- Confirmer une livraison: `PUT http://localhost:4003/livraison/:id/confirm`
+- Obtenir les livraisons: `GET http://localhost:4003/livraison/list`
+- Obtenir une livraison: `GET http://localhost:4003/livraison/:id`
 
 ## Exemple de flux de test
 
@@ -75,5 +95,32 @@ node index.js
 2. Utilisez le token pour créer un produit
 3. Utilisez le même token pour créer une commande avec ce produit
 4. Récupérez toutes les commandes de l'utilisateur
+5. Créez une livraison pour une commande existante
+6. Confirmez la livraison
+7. Récupérez les informations de la livraison
+
+## Structure du projet
+
+```
+Microservices-Product-Command/
+├── auth-service/
+│   ├── index.js
+│   └── package.json
+├── commande-service/
+│   ├── Commande.js
+│   ├── index.js
+│   ├── isAuthenticated.js
+│   └── package.json
+├── produit-service/
+│   ├── index.js
+│   ├── models/
+│   │   └── Product.js
+│   └── package.json
+└── livraison-service/
+    ├── index.js
+    ├── livraison.js
+    ├── isAuthenticated.js
+    └── package.json
+```
 
  
