@@ -5,7 +5,7 @@ const LivraisonSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  transporteur_i: {
+  transporteur_id: {
     type: String,
     required: true
   },
@@ -15,9 +15,10 @@ const LivraisonSchema = new mongoose.Schema({
   },
   statut: {
     type: String,
+    enum: ["En attente", "En cours", "Livrée"],
     default: "En attente"
   },
-  date_creation: {
+  created_at: {
     type: Date,
     default: Date.now
   }

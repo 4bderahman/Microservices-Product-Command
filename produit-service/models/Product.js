@@ -6,11 +6,11 @@ const productSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-  name: {
+  nom: {
     type: String,
     required: true,
   },
-  price: {
+  prix: {
     type: Number,
     required: true,
   },
@@ -18,6 +18,15 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
+  stock: {
+    type: Number,
+    required: true,
+    default: 0
+  },
+  created_at: {
+    type: Date,
+    default: Date.now
+  }
 });
 
 const Product = mongoose.model("Product", productSchema);

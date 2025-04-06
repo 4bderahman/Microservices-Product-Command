@@ -60,13 +60,14 @@ mongoose
   });
 
 // POST ROUTE
-app.post("/api/products", isAuthenticated, async (req, res) => {
+app.post("/produit/ajouter", isAuthenticated, async (req, res) => {
     try {
       const productData = {
         productId: req.body.productId, 
-        name: req.body.name,
-        price: req.body.price,
+        nom: req.body.nom,
+        prix: req.body.prix,
         description: req.body.description,
+        stock: req.body.stock || 0,
       };
         
       if (!productData.productId) {
@@ -93,9 +94,9 @@ app.post("/api/products", isAuthenticated, async (req, res) => {
 );
 
 // GET ROUTE
-app.get("/api/products/:productId", isAuthenticated, async (req, res) => {
+app.get("/produit/:id", isAuthenticated, async (req, res) => {
     try {
-      const productId = Number(req.params.productId);
+      const productId = Number(req.params.id);
       const product = await Product.findOne({ productId: productId });
 
       if (!product) {
@@ -115,6 +116,42 @@ app.get("/api/products/:productId", isAuthenticated, async (req, res) => {
       });
     }
   });
+
+// PATCH route to update product stock
+app.patch("/produit/:id/stock", isAuthenticated, async (req, res) => {
+  try {
+    const productId = Number(req.params.id);
+    const { stock } = req.body;
+    
+    if (stock === undefined || isNaN(stock)) {
+      return res.status(400).json({
+        message: "Stock doit être un nombre valide"
+      });
+    }
+    
+    const product = await Product.findOne({ productId: productId });
+    
+    if (!product) {
+      return res.status(404).json({
+        message: "Produit non trouvé!"
+      });
+    }
+    
+    product.stock = stock;
+    await product.save();
+    
+    res.json({
+      message: "Stock mis à jour avec succès",
+      product: product
+    });
+  } catch (error) {
+    console.error("Error updating stock:", error);
+    res.status(500).json({
+      message: "Error updating stock",
+      error: error.message
+    });
+  }
+});
 
 // Define PORT above the server start
 const PORT = process.env.PORT || 4000;

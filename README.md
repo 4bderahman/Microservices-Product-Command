@@ -70,22 +70,24 @@ node index.js
 
 - Inscription: `POST http://localhost:4002/auth/register`
 - Connexion: `POST http://localhost:4002/auth/login`
+- Profil utilisateur: `GET http://localhost:4002/auth/profil`
 
 ### Service de Produits (Port 4000)
 
-- Créer un produit: `POST http://localhost:4000/api/products`
-- Obtenir un produit: `GET http://localhost:4000/api/products/:productId`
+- Créer un produit: `POST http://localhost:4000/produit/ajouter`
+- Obtenir un produit: `GET http://localhost:4000/produit/:id`
+- Mettre à jour le stock: `PATCH http://localhost:4000/produit/:id/stock`
 
 ### Service de Commandes (Port 4001)
 
-- Créer une commande: `POST http://localhost:4001/commande/create`
-- Obtenir les commandes: `GET http://localhost:4001/commande/get`
+- Créer une commande: `POST http://localhost:4001/commande/ajouter`
 - Obtenir une commande par ID: `GET http://localhost:4001/commande/:id`
+- Mettre à jour le statut: `PATCH http://localhost:4001/commande/:id/statut`
 
 ### Service de Livraison (Port 4003)
 
-- Créer une livraison: `POST http://localhost:4003/livraison/create`
-- Confirmer une livraison: `PUT http://localhost:4003/livraison/:id/confirm`
+- Créer une livraison: `POST http://localhost:4003/livraison/ajouter`
+- Mettre à jour le statut: `PUT http://localhost:4003/livraison/:id`
 - Obtenir les livraisons: `GET http://localhost:4003/livraison/list`
 - Obtenir une livraison: `GET http://localhost:4003/livraison/:id`
 

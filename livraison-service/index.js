@@ -35,11 +35,11 @@ async function verifyCommandeExists(id) {
 }
 
 // Create a new delivery
-app.post("/livraison/create", isAuthenticated, async (req, res) => {
+app.post("/livraison/ajouter", isAuthenticated, async (req, res) => {
     try {
-        const { commande_id, transporteur_i, adresse_livraison } = req.body;
+        const { commande_id, transporteur_id, adresse_livraison } = req.body;
 
-        if (!commande_id || !transporteur_i || !adresse_livraison) {
+        if (!commande_id || !transporteur_id || !adresse_livraison) {
             return res.status(400).json({ message: "Missing required fields" });
         }
 
@@ -51,12 +51,24 @@ app.post("/livraison/create", isAuthenticated, async (req, res) => {
 
         const newLivraison = new Livraison({
             commande_id,
-            transporteur_i,
+            transporteur_id,
             adresse_livraison,
-            userId: req.user.userId // Link to the user who created the delivery
+            statut: "En attente"
         });
 
         const savedLivraison = await newLivraison.save();
+        
+        // Update the commande status to "Expédiée"
+        try {
+            await axios.patch(`http://localhost:4001/commande/${commande_id}/statut`,
+                { statut: "Expédiée" },
+                { headers: { 'Content-Type': 'application/json' } }
+            );
+        } catch (error) {
+            console.error("Error updating commande status:", error);
+            // Continue even if command status update fails
+        }
+        
         res.status(201).json(savedLivraison);
     } catch (error) {
         console.error("Error creating livraison:", error);
@@ -64,13 +76,20 @@ app.post("/livraison/create", isAuthenticated, async (req, res) => {
     }
 });
 
-// Update delivery status to "Confirmed"
-app.put("/livraison/:id/confirm", isAuthenticated, async (req, res) => {
+// Update delivery status
+app.put("/livraison/:id", isAuthenticated, async (req, res) => {
     try {
-        const id = req.params.id;
-        const livraison = await Livraison.findOneAndUpdate(
-            { _id: id },
-            { $set: { statut: "Confirmée" } },
+        const { statut } = req.body;
+        
+        if (!statut || !["En attente", "En cours", "Livrée"].includes(statut)) {
+            return res.status(400).json({ 
+                message: "Statut invalide. Valeurs acceptées: 'En attente', 'En cours', 'Livrée'" 
+            });
+        }
+        
+        const livraison = await Livraison.findByIdAndUpdate(
+            req.params.id,
+            { $set: { statut } },
             { new: true }
         );
 

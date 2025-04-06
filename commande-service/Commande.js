@@ -11,16 +11,31 @@ const CommandeSchema = new mongoose.Schema({
         type: Number,
         required: true,
       },
+      quantite: {
+        type: Number,
+        required: true,
+        default: 1
+      }
     },
   ],
-  total: {
+  prix_total: {
     type: Number,
     required: true,
   },
-  userId: {
+  client_id: {
     type: String,
     required: true,
   },
+  statut: {
+    type: String,
+    required: true,
+    enum: ["En attente", "Confirmée", "Expédiée"],
+    default: "En attente"
+  },
+  created_at: {
+    type: Date,
+    default: Date.now
+  }
 });
 
 module.exports = mongoose.model("Commande", CommandeSchema); 
